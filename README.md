@@ -1,30 +1,52 @@
-# zo-collaboration-globe
+# Zo × Future of Collaboration
 
-Standalone repo for the Zo collaboration globe demo.
+A global creative coordination demo — each node is a person, each edge a shared intention.
 
-## Route map
+## Live
 
-| Route | Type | Description |
-|-------|------|-------------|
-| `/` | page | Public globe demo showing a sample network of hubs and connections |
-| `/vangogh` | page | Sample artist space for Vincent van Gogh |
-| `/picasso` | page | Sample artist space for Pablo Picasso |
-| `/kahlo` | page | Sample artist space for Frida Kahlo |
-| `/okeeffe` | page | Sample artist space for Georgia O'Keeffe |
-| `/kusama` | page | Sample artist space for Yayoi Kusama |
+**https://etok.zo.space/globe**
 
-## Notes
+## What we built
 
-- The homepage is the demo.
-- The page is designed to be shared directly with friends and collaborators.
-- Keep the sample network small, legible, and opinionated.
-- The five artist pages are fictionalized demo spaces, not real accounts.
-- Keep all sample spaces inside this repo so the demo stays self-contained.
+1. **PRD** — Sharpened the original vision into a bounded v1 spec at `wiki/zo-spaces-future-of-collaboration-prd.md`
+2. **Globe site** — Standalone git repo at [github.com/EthanThatOneKid/zo-collaboration-globe](https://github.com/EthanThatOneKid/zo-collaboration-globe)
+3. **Live globe** — `/globe` route on `etok.zo.space` (no extra service slot needed) serving an interactive SVG globe with 6 sample artist hubs
 
-## Future Session Plan
+## Sample hubs (current)
 
-1. Keep `/` as the main globe surface and make it the place that explains the vision at a glance.
-2. Add five sample artist spaces with distinct identities, each one feeling like a real Zo personal site.
-3. Make the globe visually connect the five artist spaces so the relationships are obvious.
-4. Use a small shared data layer for hub metadata, edges, and profile copy so the demo stays easy to edit.
-5. Verify the page in-browser on desktop and mobile before any shareable preview is considered finished.
+| Handle | Name | Location | Bio |
+|---|---|---|---|
+| `@etok` | Ethan | San Francisco, CA | Maker, builder, Zo enthusiast |
+| `@vangogh` | Van Gogh | Arles, France | Painter of nights and sunflowers |
+| `@picasso` | Picasso | Barcelona, Spain | Cubist, sculptor, troublemaker |
+| `@kahlo` | Frida Kahlo | Coyoacán, Mexico | Painter of self, pain, and flowers |
+| `@okeeffe` | Georgia O'Keeffe | Santa Fe, NM | Desert flowers and animal bones |
+| `@kusama` | Yayoi Kusama | Tokyo, Japan | Infinity, polka dots, mirrors |
+
+## Next: three-globe upgrade
+
+Replace the SVG globe with [three-globe](https://github.com/vasturiano/three-globe) for a real 3D animated Earth:
+
+- [ ] `npm install three-globe` → not needed (use CDN or copy UMD)
+- [ ] Swap `routes/index.ts` from SVG canvas to `<ThreeGlobe>` component
+- [ ] Load sample hub data as JSON-LD graph
+- [ ] Animate arcs between connected hubs
+- [ ] Click-to-zoom and hover tooltips on nodes
+- [ ] Background: star field or dark space aesthetic
+- [ ] Portrait/mobile-friendly layout
+
+## Later phases
+
+- **Artist sub-pages** — `/vangogh`, `/picasso`, `/kahlo`, `/okeeffe`, `/kusama` — real-looking personal pages as if each artist were alive on Zo today
+- **Hub directory** — index page listing all hubs with search/filter
+- **Follow system** — follow/unfollow hubs, follower count
+- **Shared intentions** — hubs can post short-term collaborative intentions (e.g. "looking for a co-author on a painting about ocean colors")
+- **Mesh layer** — JSON-LD schema for hub profiles + shared state
+- **Zo × Future of Collaboration site** — full brand site at `zo.etok.me` (or custom domain) once plan is locked
+
+## Stack
+
+- Zo Space page route (`/globe`) — no extra service slot
+- React + TypeScript
+- Tailwind CSS 4 (pre-configured on zo.space)
+- Three.globe for 3D globe (CDN or copy)
