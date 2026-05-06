@@ -1,209 +1,184 @@
 import { useEffect, useRef, useState } from "react";
+import { SAMPLE_HUBS, SAMPLE_LINKS } from "../lib/data";
 
-const SAMPLE_HUBS = [
-  {
-    name: "Ethan",
-    handle: "etok",
-    location: "San Francisco, CA",
-    lat: 37.7749,
-    lng: -122.4194,
-    color: "#6366f1",
-    bio: "Maker, builder, Zo enthusiast",
-    avatar: "👨‍💻",
-  },
-  {
-    name: "Van Gogh",
-    handle: "vangogh",
-    location: "Arles, France",
-    lat: 43.9493,
-    lng: 4.8055,
-    color: "#f59e0b",
-    bio: "Painter of nights and sunflowers",
-    avatar: "🎨",
-  },
-  {
-    name: "Picasso",
-    handle: "picasso",
-    location: "Barcelona, Spain",
-    lat: 41.3874,
-    lng: 2.1686,
-    color: "#ef4444",
-    bio: "Cubist, sculptor, troublemaker",
-    avatar: "🖼️",
-  },
-  {
-    name: "Frida Kahlo",
-    handle: "kahlo",
-    location: "Coyoacán, Mexico",
-    lat: 19.3467,
-    lng: -99.1617,
-    color: "#10b981",
-    bio: "Painter of self, pain, and flowers",
-    avatar: "🌺",
-  },
-  {
-    name: "Georgia O'Keeffe",
-    handle: "okeeffe",
-    location: "Santa Fe, NM",
-    lat: 35.687,
-    lng: -105.9378,
-    color: "#8b5cf6",
-    bio: "Desert flowers and animal bones",
-    avatar: "🏜️",
-  },
-  {
-    name: "Yayoi Kusama",
-    handle: "kusama",
-    location: "Tokyo, Japan",
-    lat: 35.6762,
-    lng: 139.6503,
-    color: "#ec4899",
-    bio: "Infinity, polka dots, mirrors",
-    avatar: "🔴",
-  },
-];
+const HUB_COLORS = SAMPLE_HUBS.map((h) => h.color);
 
-const EDGES = [
-  [0, 1], [0, 2], [0, 3], [0, 4], [0, 5],
-  [1, 2], [2, 3], [3, 4], [4, 5], [5, 1],
-];
+// Declare three-globe for TypeScript (loaded from CDN)
+declare const Globe: {
+  new (): {
+    globeImageUrl(img: string): unknown;
+    pointsData(data: unknown[]): unknown;
+    pointLat("lat"): unknown;
+    pointLng("lng"): unknown;
+    pointColor(color: string): unknown;
+    pointLabel(label: string): unknown;
+    linksData(data: unknown[]): unknown;
+    linkStartLat("lat"): unknown;
+    linkStartLng("lng"): unknown;
+    linkEndLat("lat"): unknown;
+    linkEndLng("lng"): unknown;
+    linkColor(() => string): unknown;
+    linkDirection("arrow"): unknown;
+    linkWidth(1): unknown;
+    linkLabel(label: string): unknown;
+    onPointClick(cb: (point: unknown) => void): unknown;
+    onPointHover(cb: (point: unknown) => void): unknown;
+    enablePointerInteraction(true): unknown;
+    pointRadius(0.5): unknown;
+    pointsMerge(false): unknown;
+    backgroundImageUrl(imgUrl: string): unknown;
+  } & unknown;
+};
 
-const CENTER_LNG = -30;
-const WIDTH = 800;
-const HEIGHT = 500;
+const THREE_GLOBE_URL =
+  "https://unpkg.com/three-globe@2.45.2/globe.gl.js";
 
-function latLngToXY(lat: number, lng: number) {
-  const x = ((lng - CENTER_LNG + 180 + 540) % 360) - 180;
-  const y = 90 - lat;
-  return {
-    x: (x / 360) * WIDTH,
-    y: (y / 180) * HEIGHT,
-  };
+interface Point {
+  id: number;
+  handle: string;
+  name: string;
+  location: string;
+  lat: number;
+  lng: number;
+  color: string;
+  bio: string;
+  avatar: string;
 }
 
-export default function Globe() {
+export default function GlobePage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const globeRef = useRef<unknown>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [threeLoaded, setThreeLoaded] = useState(false);
+  const [threeError, setThreeError] = useState(false);
 
-  const points = SAMPLE_HUBS.map((h) => latLngToXY(h.lat, h.lng));
+  useEffect(() => {
+    // Dynamically load three-globe from CDN
+    const script = document.createElement("script");
+    script.src = THREE_GLOBE_URL;
+    script.onload = () => setThreeLoaded(true);
+    script.onerror = () => setThreeError(true);
+    document.head.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (!threeLoaded || !containerRef.current || !window.THREE) return;
+
+    const container = containerRef.current;
+    const GlobeClass = (window as unknown as { Globe: typeof Globe }).Globe;
+
+    const myGlobe = GlobeClass()
+      .globeImageUrl("//unpkg.com/three-globe@2.45.2/example/img/earth-blue-marble.jpg")
+      .backgroundImageUrl("//unpkg.com/three-globe@2.45.2/example/img/night-sky.png")
+      .pointsData(SAMPLE_HUBS)
+      .pointLat("lat")
+      .pointLng("lng")
+      .pointColor((d: unknown) => {
+        const p = d as Point;
+        return p.color || "#6366f1";
+      })
+      .pointRadius(0.5)
+      .pointLabel(
+        (d: unknown) => {
+          const p = d as Point;
+          return `<div style="font-family:sans-serif;padding:4px 8px;background:rgba(0,0,0,0.7);border-radius:4px;color:white;">
+            <b>${p.name}</b> (@${p.handle})<br/>
+            <span style="font-size:12px;color:#aaa">${p.location}</span>
+          </div>`;
+        }
+      )
+      .linksData(SAMPLE_LINKS.map((l) => {
+        const from = SAMPLE_HUBS.find((h) => h.handle === l.from_handle)!;
+        const to = SAMPLE_HUBS.find((h) => h.handle === l.to_handle)!;
+        return { lat1: from.lat, lng1: from.lng, lat2: to.lat, lng2: to.lng };
+      }))
+      .linkStartLat("lat1")
+      .linkStartLng("lng1")
+      .linkEndLat("lat2")
+      .linkEndLng("lng2")
+      .linkColor(() => "rgba(99,102,241,0.6)")
+      .linkWidth(1)
+      .linkDirection(1)
+      .onPointClick((d: unknown) => {
+        const p = d as Point;
+        const idx = SAMPLE_HUBS.findIndex((h) => h.handle === p.handle);
+        setSelected(idx);
+      })
+      .onPointHover((d: unknown) => {
+        if (!d) { setHovered(null); return; }
+        const p = d as Point;
+        const idx = SAMPLE_HUBS.findIndex((h) => h.handle === p.handle);
+        setHovered(idx);
+      })
+      .enablePointerInteraction(true);
+
+    (container as unknown as { appendChild: (el: unknown) => void }).appendChild(myGlobe as unknown as Node);
+    globeRef.current = myGlobe;
+
+    // Size the canvas
+    const resize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      (myGlobe as unknown as { width(w: number): unknown; height(h: number): unknown }).width(w).height(h);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+    };
+  }, [threeLoaded]);
+
+  const selectedHub = selected !== null ? SAMPLE_HUBS[selected] : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-3xl font-bold mb-2 text-center">
-        Zo × Future of Collaboration
-      </h1>
-      <p className="text-gray-400 mb-6 text-center text-sm max-w-md">
+    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-4">
+      <h1 className="text-2xl font-bold mb-1 text-center">Zo × Future of Collaboration</h1>
+      <p className="text-gray-400 mb-4 text-center text-xs max-w-md">
         A global map of creative hubs — each node is a person, each edge a shared intention.
+        {threeError && (
+            <span className="text-yellow-500 ml-2"> (3D unavailable — showing fallback)</span>
+        )}
       </p>
 
-      <div className="relative" style={{ width: WIDTH, height: HEIGHT }}>
-        <svg
-          width={WIDTH}
-          height={HEIGHT}
-          className="absolute inset-0"
-          style={{ opacity: mounted ? 1 : 0, transition: "opacity 1s" }}
-        >
-          {[-60, -30, 0, 30, 60].map((lat) => {
-            const y = ((90 - lat) / 180) * HEIGHT;
-            return (
-              <line
-                key={`lat-${lat}`}
-                x1={0} y1={y} x2={WIDTH} y2={y}
-                stroke="#1e293b" strokeWidth={0.5} strokeDasharray="4 4"
-              />
-            );
-          })}
-          {[-120, -60, 0, 60, 120].map((lng) => {
-            const cx = WIDTH / 2;
-            const cy = HEIGHT / 2;
-            const R = 200;
-            const px = Math.cos((lng * Math.PI) / 180) * R;
-            return (
-              <ellipse
-                key={`lng-${lng}`}
-                cx={cx} cy={cy}
-                rx={Math.abs(px)} ry={R}
-                fill="none"
-                stroke="#1e293b"
-                strokeWidth={0.5}
-                strokeDasharray="4 4"
-              />
-            );
-          })}
+      {/* Globe container */}
+      <div
+        ref={containerRef}
+        className="relative w-full max-w-2xl"
+        style={{ height: "400px" }}
+      />
 
-          {EDGES.map(([a, b], i) => {
-            const p1 = points[a];
-            const p2 = points[b];
-            const isActive = hovered === a || hovered === b;
-            return (
-              <line
-                key={`edge-${i}`}
-                x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-                stroke={isActive ? "#6366f1" : "#334155"}
-                strokeWidth={isActive ? 2 : 1}
-                strokeOpacity={isActive ? 1 : 0.4}
-                style={{ transition: "all 0.3s" }}
-              />
-            );
-          })}
+      {/* Fallback SVG when three-globe not available */}
+      {!threeLoaded && !threeError && (
+        <div className="text-gray-500 text-sm mb-2">Loading 3D globe…</div>
+      )}
+      {threeError && <FallbackSVG selected={selected} hovered={hovered} onSelect={setSelected} />}
 
-          {points.map((p, i) => {
-            const hub = SAMPLE_HUBS[i];
-            const isSelected = selected === i;
-            const isHov = hovered === i;
-            const r = isSelected ? 10 : isHov ? 8 : 6;
-            return (
-              <g
-                key={i}
-                onClick={() => setSelected(isSelected ? null : i)}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
-                style={{ cursor: "pointer" }}
-              >
-                {(isSelected || isHov) && (
-                  <circle cx={p.x} cy={p.y} r={r + 6} fill={hub.color} opacity={0.2} />
-                )}
-                <circle cx={p.x} cy={p.y} r={r} fill={hub.color} />
-                <text
-                  x={p.x}
-                  y={p.y - r - 6}
-                  textAnchor="middle"
-                  fill={hub.color}
-                  fontSize={10}
-                  fontFamily="monospace"
-                >
-                  {hub.handle}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {selected !== null && (
+      {/* Bio panel */}
+      {selectedHub && (
         <div
-          className="mt-6 p-4 rounded-xl border text-center max-w-sm w-full"
+          className="mt-4 p-4 rounded-xl border text-center max-w-sm w-full"
           style={{
-            borderColor: SAMPLE_HUBS[selected].color + "44",
+            borderColor: selectedHub.color + "44",
             background: "#111827",
           }}
         >
-          <div className="text-4xl mb-2">{SAMPLE_HUBS[selected].avatar}</div>
-          <h2 className="text-xl font-bold">{SAMPLE_HUBS[selected].name}</h2>
-          <p className="text-gray-400 text-sm">@{SAMPLE_HUBS[selected].handle}</p>
-          <p className="text-gray-300 text-sm mt-2">{SAMPLE_HUBS[selected].bio}</p>
-          <p className="text-xs text-gray-500 mt-1">{SAMPLE_HUBS[selected].location}</p>
+          <div className="text-4xl mb-2">{selectedHub.avatar}</div>
+          <h2 className="text-xl font-bold">{selectedHub.name}</h2>
+          <p className="text-gray-400 text-sm">@{selectedHub.handle}</p>
+          <p className="text-gray-300 text-sm mt-2">{selectedHub.bio}</p>
+          <p className="text-xs text-gray-500 mt-1">{selectedHub.location}</p>
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-3 justify-center">
+      {/* Hub picker */}
+      <div className="mt-4 flex flex-wrap gap-2 justify-center">
         {SAMPLE_HUBS.map((h, i) => (
           <button
             key={i}
             onClick={() => setSelected(selected === i ? null : i)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border transition-all"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-all"
             style={{
               borderColor: selected === i ? h.color : "#334155",
               background: selected === i ? h.color + "22" : "transparent",
@@ -216,9 +191,66 @@ export default function Globe() {
         ))}
       </div>
 
-      <p className="text-gray-600 text-xs mt-8">
-        Zo × Future of Collaboration — Interactive Globe Demo
-      </p>
+      <p className="text-gray-600 text-xs mt-6">Zo × Future of Collaboration — Interactive Globe Demo</p>
+    </div>
+  );
+}
+
+// Simple SVG fallback when three-globe fails
+function FallbackSVG({ selected, hovered, onSelect }: {
+  selected: number | null;
+  hovered: number | null;
+  onSelect: (i: number | null) => void;
+}) {
+  const WIDTH = 600;
+  const HEIGHT = 300;
+  const CENTER_LNG = -30;
+
+  function latLngToXY(lat: number, lng: number) {
+    const x = ((lng - CENTER_LNG + 180 + 540) % 360) - 180;
+    const y = 90 - lat;
+    return { x: (x / 360) * WIDTH, y: (y / 180) * HEIGHT };
+  }
+
+  const points = SAMPLE_HUBS.map((h) => latLngToXY(h.lat, h.lng));
+  const EDGES = SAMPLE_LINKS.map((l) => [
+    SAMPLE_HUBS.findIndex((h) => h.handle === l.from_handle),
+    SAMPLE_HUBS.findIndex((h) => h.handle === l.to_handle),
+  ]);
+
+  return (
+    <div className="relative w-full max-w-2xl" style={{ height: "400px" }}>
+      <svg width={WIDTH} height={HEIGHT} className="w-full h-full">
+        {EDGES.map(([a, b], i) => {
+          const p1 = points[a];
+          const p2 = points[b];
+          const isActive = hovered === a || hovered === b;
+          return (
+            <line
+              key={i}
+              x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
+              stroke={isActive ? "#6366f1" : "#334155"}
+              strokeWidth={isActive ? 2 : 1}
+              strokeOpacity={isActive ? 1 : 0.4}
+            />
+          );
+        })}
+        {points.map((p, i) => {
+          const hub = SAMPLE_HUBS[i];
+          const isSelected = selected === i;
+          const isHov = hovered === i;
+          const r = isSelected ? 8 : isHov ? 7 : 5;
+          return (
+            <g key={i} onClick={() => onSelect(isSelected ? null : i)} style={{ cursor: "pointer" }}>
+              <circle cx={p.x} cy={p.y} r={r + 4} fill={hub.color} opacity={0.2} />
+              <circle cx={p.x} cy={p.y} r={r} fill={hub.color} />
+              <text x={p.x} y={p.y - r - 4} textAnchor="middle" fill={hub.color} fontSize={9} fontFamily="monospace">
+                {hub.handle}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
