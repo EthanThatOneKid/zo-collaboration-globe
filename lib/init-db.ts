@@ -1,30 +1,69 @@
-import Database from "better-sqlite3";
-import { readFileSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { mkdirSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "../data");
 const DB_PATH = join(DATA_DIR, "globe.db");
 
-let _db: Database.Database | null = null;
+function runSqlRaw(sql: string) {
+  const result = spawnSync("sqlite3", [DB_PATH, sql], { encoding: "utf8" });
+  if (result.status !== 0) {
+    throw new Error(`sqlite3 error: ${result.stderr}\nSQL: ${sql}`);
+  }
+  return result.stdout;
+}
 
-export function getDb(): Database.Database {
-  if (_db) return _db;
+function getColumns(table: string): string[] {
+  const output = runSqlRaw(`PRAGMA table_info(${table});`);
+  return output
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.split("|")[1])
+    .filter(Boolean);
+}
+
+function ensureColumn(table: string, column: string, definition: string) {
+  if (getColumns(table).includes(column)) {
+    return;
+  }
+  runSqlRaw(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`);
+}
+
+export function getDbPath(): string {
   mkdirSync(DATA_DIR, { recursive: true });
-  _db = new Database(DB_PATH);
-  _db.pragma("journal_mode = WAL");
-  return _db;
+  return DB_PATH;
 }
 
 export function initDb(): void {
-  const db = getDb();
+  const dbPath = getDbPath();
   const schema = readFileSync(join(__dirname, "schema.sql"), "utf8");
-  db.exec(schema);
-  console.log("[globe] DB initialized at", DB_PATH);
+  const init = spawnSync("sqlite3", [dbPath], {
+    input: schema,
+    encoding: "utf8",
+  });
+
+  if (init.status !== 0) {
+    throw new Error(`initDb failed: ${init.stderr}`);
+  }
+
+  ensureColumn("hubs", "url", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn("hubs", "tags", "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn("hubs", "creator_handle", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn("hubs", "featured", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(
+    "hubs",
+    "privacy_offset_applied",
+    "INTEGER NOT NULL DEFAULT 1",
+  );
+  runSqlRaw(
+    "CREATE UNIQUE INDEX IF NOT EXISTS links_unique_pair ON links(from_handle, to_handle);",
+  );
+  console.log("[globe] DB initialized at", dbPath);
 }
 
-// run directly: bun run lib/init-db.ts
 if (import.meta.url === `file://${process.argv[1]}`) {
   initDb();
 }

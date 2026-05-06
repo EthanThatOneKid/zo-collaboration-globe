@@ -1,4 +1,4 @@
-export interface Hub {
+export interface SpaceRecord {
   id: number;
   handle: string;
   name: string;
@@ -8,92 +8,186 @@ export interface Hub {
   color: string;
   bio: string;
   avatar: string;
+  url: string;
+  tags: string[];
+  creator_handle: string;
+  featured: boolean;
+  privacy_offset_applied: boolean;
 }
 
-export interface Link {
+export interface LinkRecord {
   id: number;
   from_handle: string;
   to_handle: string;
 }
 
-export const SAMPLE_HUBS: Hub[] = [
+export const SAMPLE_SPACES: SpaceRecord[] = [
   {
     id: 1,
-    handle: "etok",
-    name: "Ethan",
-    location: "San Francisco, CA",
-    lat: 37.7749,
-    lng: -122.4194,
-    color: "#6366f1",
-    bio: "Maker, builder, Zo enthusiast",
-    avatar: "👨‍💻",
+    handle: "globe",
+    name: "Zo Collaboration Globe",
+    location: "Brooklyn, NY",
+    lat: 40.6782,
+    lng: -73.9442,
+    color: "#3b82f6",
+    bio: "A public map of how Zo Spaces relate to one another across cities.",
+    avatar: "🌐",
+    url: "https://etok.zo.space/globe",
+    tags: ["network", "registry", "community"],
+    creator_handle: "etok",
+    featured: true,
+    privacy_offset_applied: true,
   },
   {
     id: 2,
-    handle: "vangogh",
-    name: "Van Gogh",
-    location: "Arles, France",
-    lat: 43.9493,
-    lng: 4.8055,
-    color: "#f59e0b",
-    bio: "Painter of nights and sunflowers",
-    avatar: "🎨",
+    handle: "amity-square",
+    name: "Amity Square",
+    location: "Los Angeles, CA",
+    lat: 34.0522,
+    lng: -118.2437,
+    color: "#22c55e",
+    bio: "An explorable pixel-world showing how Zo Spaces can host playful environments.",
+    avatar: "🌳",
+    url: "https://etok.zo.space/amity-square",
+    tags: ["game", "world", "interactive"],
+    creator_handle: "etok",
+    featured: true,
+    privacy_offset_applied: true,
   },
   {
     id: 3,
-    handle: "picasso",
-    name: "Picasso",
-    location: "Barcelona, Spain",
-    lat: 41.3874,
-    lng: 2.1686,
-    color: "#ef4444",
-    bio: "Cubist, sculptor, troublemaker",
-    avatar: "🖼️",
+    handle: "gameboy-share",
+    name: "Gameboy Share",
+    location: "Toronto, ON",
+    lat: 43.6532,
+    lng: -79.3832,
+    color: "#f59e0b",
+    bio: "A shared control surface that turns a Zo Space into a multiplayer ritual.",
+    avatar: "🎮",
+    url: "https://etok.zo.space/gameboy-share",
+    tags: ["play", "multiplayer", "ritual"],
+    creator_handle: "etok",
+    featured: true,
+    privacy_offset_applied: true,
   },
   {
     id: 4,
-    handle: "kahlo",
-    name: "Frida Kahlo",
-    location: "Coyoacán, Mexico",
-    lat: 19.3467,
-    lng: -99.1617,
-    color: "#10b981",
-    bio: "Painter of self, pain, and flowers",
-    avatar: "🌺",
+    handle: "studio",
+    name: "Studio",
+    location: "London, UK",
+    lat: 51.5072,
+    lng: -0.1276,
+    color: "#ec4899",
+    bio: "A 3D calling card that shows personal sites can feel spatial and cinematic.",
+    avatar: "🪩",
+    url: "https://etok.zo.space/studio",
+    tags: ["3d", "portfolio", "design"],
+    creator_handle: "etok",
+    featured: false,
+    privacy_offset_applied: true,
   },
   {
     id: 5,
-    handle: "okeeffe",
-    name: "Georgia O'Keeffe",
-    location: "Santa Fe, NM",
-    lat: 35.687,
-    lng: -105.9378,
+    handle: "creative-wall",
+    name: "Creative Wall",
+    location: "Singapore",
+    lat: 1.3521,
+    lng: 103.8198,
     color: "#8b5cf6",
-    bio: "Desert flowers and animal bones",
-    avatar: "🏜️",
+    bio: "A social canvas for showing how many small creative acts can live together.",
+    avatar: "🧱",
+    url: "https://etok.zo.space/new-place",
+    tags: ["social", "feed", "canvas"],
+    creator_handle: "etok",
+    featured: false,
+    privacy_offset_applied: true,
   },
   {
     id: 6,
-    handle: "kusama",
-    name: "Yayoi Kusama",
-    location: "Tokyo, Japan",
-    lat: 35.6762,
-    lng: 139.6503,
-    color: "#ec4899",
-    bio: "Infinity, polka dots, mirrors",
-    avatar: "🔴",
+    handle: "place-canvas",
+    name: "Place Canvas",
+    location: "Warsaw, Poland",
+    lat: 52.2297,
+    lng: 21.0122,
+    color: "#ef4444",
+    bio: "A mosaic surface for many contributors, useful as the registry's gallery-wall twin.",
+    avatar: "🟦",
+    url: "https://etok.zo.space/place",
+    tags: ["mosaic", "canvas", "collective"],
+    creator_handle: "etok",
+    featured: false,
+    privacy_offset_applied: true,
   },
 ];
 
-export const SAMPLE_LINKS: Link[] = [
-  { id: 1, from_handle: "etok", to_handle: "vangogh" },
-  { id: 2, from_handle: "etok", to_handle: "picasso" },
-  { id: 3, from_handle: "etok", to_handle: "kahlo" },
-  { id: 4, from_handle: "etok", to_handle: "okeeffe" },
-  { id: 5, from_handle: "etok", to_handle: "kusama" },
-  { id: 6, from_handle: "vangogh", to_handle: "picasso" },
-  { id: 7, from_handle: "picasso", to_handle: "kahlo" },
-  { id: 8, from_handle: "kahlo", to_handle: "okeeffe" },
-  { id: 9, from_handle: "okeeffe", to_handle: "kusama" },
-  { id: 10, from_handle: "kusama", to_handle: "vangogh" },
+export const SAMPLE_LINKS: LinkRecord[] = [
+  { id: 1, from_handle: "globe", to_handle: "amity-square" },
+  { id: 2, from_handle: "globe", to_handle: "gameboy-share" },
+  { id: 3, from_handle: "globe", to_handle: "studio" },
+  { id: 4, from_handle: "globe", to_handle: "creative-wall" },
+  { id: 5, from_handle: "globe", to_handle: "place-canvas" },
+  { id: 6, from_handle: "creative-wall", to_handle: "place-canvas" },
+  { id: 7, from_handle: "amity-square", to_handle: "studio" },
+  { id: 8, from_handle: "gameboy-share", to_handle: "creative-wall" },
 ];
+
+export function parseTags(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(String).map((tag) => tag.trim()).filter(Boolean);
+  }
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed.map(String).map((tag) => tag.trim()).filter(Boolean);
+    }
+  } catch {}
+
+  return trimmed
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+export function serializeTags(tags: string[]): string {
+  return JSON.stringify(
+    tags.map((tag) => tag.trim()).filter(Boolean),
+  );
+}
+
+export function normalizeSpaceRecord(
+  row: Record<string, unknown>,
+): SpaceRecord | null {
+  const url = typeof row.url === "string" ? row.url.trim() : "";
+  const creatorHandle =
+    typeof row.creator_handle === "string" ? row.creator_handle.trim() : "";
+
+  if (!url || !creatorHandle) {
+    return null;
+  }
+
+  return {
+    id: Number(row.id ?? 0),
+    handle: String(row.handle ?? ""),
+    name: String(row.name ?? ""),
+    location: String(row.location ?? ""),
+    lat: Number(row.lat ?? 0),
+    lng: Number(row.lng ?? 0),
+    color: String(row.color ?? "#3b82f6"),
+    bio: String(row.bio ?? ""),
+    avatar: String(row.avatar ?? "🌐"),
+    url,
+    tags: parseTags(row.tags),
+    creator_handle: creatorHandle,
+    featured: Boolean(Number(row.featured ?? 0)),
+    privacy_offset_applied: Boolean(Number(row.privacy_offset_applied ?? 0)),
+  };
+}
