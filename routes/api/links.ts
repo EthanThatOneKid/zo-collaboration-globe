@@ -1,25 +1,37 @@
 import type { Context } from "hono";
-import { addLink, getAllLinks, seedRegistryIfNeeded } from "../../lib/db";
+import { getAllLinks, addLink } from "../../lib/db";
 import { initDb } from "../../lib/init-db";
+import { normalizeLinkType } from "../../lib/data";
 
 export default async (c: Context) => {
   initDb();
-  seedRegistryIfNeeded();
 
   if (c.req.method === "GET") {
-    return c.json({ links: getAllLinks() });
+    const links = getAllLinks();
+    return c.json({ links });
   }
 
   if (c.req.method === "POST") {
-    const body = await c.req.json();
-    const fromHandle = String(body.from_handle ?? "").trim().toLowerCase();
-    const toHandle = String(body.to_handle ?? "").trim().toLowerCase();
-
-    if (!fromHandle || !toHandle || fromHandle === toHandle) {
-      return c.json({ error: "valid from_handle and to_handle are required" }, 400);
+    let body: Record<string, unknown>;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
     }
 
-    const link = addLink(fromHandle, toHandle);
+    const fromHandle = typeof body.from_handle === "string" ? body.from_handle.trim() : "";
+    const toHandle = typeof body.to_handle === "string" ? body.to_handle.trim() : "";
+    const rawLinkType = normalizeLinkType(body.link_type);
+
+    if (!fromHandle || !toHandle) {
+      return c.json({ error: "from_handle and to_handle are required" }, 400);
+    }
+
+    if (fromHandle === toHandle) {
+      return c.json({ error: "Cannot link a space to itself" }, 400);
+    }
+
+    const link = addLink(fromHandle, toHandle, rawLinkType);
     return c.json({ link }, 201);
   }
 

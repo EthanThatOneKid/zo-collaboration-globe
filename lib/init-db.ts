@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { seedRegistryIfNeeded } from "./db";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "../data");
@@ -61,6 +62,8 @@ export function initDb(): void {
   runSqlRaw(
     "CREATE UNIQUE INDEX IF NOT EXISTS links_unique_pair ON links(from_handle, to_handle);",
   );
+
+  seedRegistryIfNeeded();
   console.log("[globe] DB initialized at", dbPath);
 }
 

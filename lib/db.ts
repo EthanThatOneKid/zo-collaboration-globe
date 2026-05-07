@@ -26,6 +26,8 @@ type SpaceInput = {
   privacy_offset_applied?: boolean;
 };
 
+export type LinkType = "friend" | "collab" | "alum" | "mentor" | "sponsor";
+
 function escapeSql(value: string): string {
   return value.replaceAll("'", "''");
 }
@@ -74,6 +76,7 @@ function rowToLink(row: Record<string, unknown>): LinkRecord {
     id: Number(row.id ?? 0),
     from_handle: String(row.from_handle ?? ""),
     to_handle: String(row.to_handle ?? ""),
+    link_type: String(row.link_type ?? "friend"),
   };
 }
 
@@ -121,10 +124,17 @@ export function getAllLinks(): LinkRecord[] {
   return runSql("SELECT * FROM links ORDER BY id ASC;").map(rowToLink);
 }
 
-export function addLink(fromHandle: string, toHandle: string): LinkRecord {
+export function addLink(
+  fromHandle: string,
+  toHandle: string,
+  linkType: LinkType = "friend",
+): LinkRecord {
+  const validLinkTypes: LinkType[] = ["friend", "collab", "alum", "mentor", "sponsor"];
+  const normalized = validLinkTypes.includes(linkType) ? linkType : "friend";
+
   execSql(`
-    INSERT OR IGNORE INTO links (from_handle, to_handle)
-    VALUES (${sqlValue(fromHandle)}, ${sqlValue(toHandle)});
+    INSERT OR IGNORE INTO links (from_handle, to_handle, link_type)
+    VALUES (${sqlValue(fromHandle)}, ${sqlValue(toHandle)}, ${sqlValue(normalized)});
   `);
 
   const rows = runSql(`
@@ -160,7 +170,7 @@ export function seedRegistryIfNeeded() {
   }
 
   for (const link of SAMPLE_LINKS) {
-    addLink(link.from_handle, link.to_handle);
+    addLink(link.from_handle, link.to_handle, link.link_type);
   }
 }
 

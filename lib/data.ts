@@ -19,7 +19,18 @@ export interface LinkRecord {
   id: number;
   from_handle: string;
   to_handle: string;
+  link_type: LinkType;
 }
+
+export type LinkType = "friend" | "collab" | "alum" | "mentor" | "sponsor";
+
+export const LINK_TYPES: LinkType[] = [
+  "friend",   // mutual follows / co-creators
+  "collab",   // active collaboration on a shared project
+  "alum",     // same school, cohort, or organization
+  "mentor",   // one-directional guidance
+  "sponsor",  // funding, hosting, organizational support
+];
 
 export const SAMPLE_SPACES: SpaceRecord[] = [
   {
@@ -121,14 +132,14 @@ export const SAMPLE_SPACES: SpaceRecord[] = [
 ];
 
 export const SAMPLE_LINKS: LinkRecord[] = [
-  { id: 1, from_handle: "globe", to_handle: "amity-square" },
-  { id: 2, from_handle: "globe", to_handle: "gameboy-share" },
-  { id: 3, from_handle: "globe", to_handle: "studio" },
-  { id: 4, from_handle: "globe", to_handle: "creative-wall" },
-  { id: 5, from_handle: "globe", to_handle: "place-canvas" },
-  { id: 6, from_handle: "creative-wall", to_handle: "place-canvas" },
-  { id: 7, from_handle: "amity-square", to_handle: "studio" },
-  { id: 8, from_handle: "gameboy-share", to_handle: "creative-wall" },
+  { id: 1, from_handle: "globe", to_handle: "amity-square", link_type: "collab" },
+  { id: 2, from_handle: "globe", to_handle: "gameboy-share", link_type: "friend" },
+  { id: 3, from_handle: "globe", to_handle: "studio", link_type: "collab" },
+  { id: 4, from_handle: "globe", to_handle: "creative-wall", link_type: "friend" },
+  { id: 5, from_handle: "globe", to_handle: "place-canvas", link_type: "collab" },
+  { id: 6, from_handle: "creative-wall", to_handle: "place-canvas", link_type: "friend" },
+  { id: 7, from_handle: "amity-square", to_handle: "studio", link_type: "alum" },
+  { id: 8, from_handle: "gameboy-share", to_handle: "creative-wall", link_type: "sponsor" },
 ];
 
 export function parseTags(value: unknown): string[] {
@@ -161,6 +172,11 @@ export function serializeTags(tags: string[]): string {
   return JSON.stringify(
     tags.map((tag) => tag.trim()).filter(Boolean),
   );
+}
+
+export function normalizeLinkType(value: unknown): LinkType {
+  const candidate = String(value ?? "").trim().toLowerCase() as LinkType;
+  return LINK_TYPES.includes(candidate) ? candidate : "friend";
 }
 
 export function normalizeSpaceRecord(
