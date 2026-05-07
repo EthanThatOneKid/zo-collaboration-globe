@@ -52,7 +52,7 @@ zo-collaboration-globe/
 
 ---
 
-## Open Issue: Globe canvas not rendering
+## Resolved: Globe canvas render crash
 
 **Symptom:** The page UI loads (sidebar shows 6 spaces, legend renders) but the three-globe canvas itself does not appear.
 
@@ -61,29 +61,9 @@ zo-collaboration-globe/
 [runtime] Error in /globe: a.tags.join is not a function
 ```
 
-**Diagnosis (incomplete):** The `tags` field on at least one space record is not a `string[]` when it reaches the React component. The likely chain:
-1. `lib/db.ts` reads tags from SQLite as a raw string (the JSON-serialized array)
-2. `normalizeSpaceRecord` / `parseTags` should parse it back to `string[]`
-3. The API returns the parsed result
-4. The React component receives it — but if any space's `tags` is still a string at render time, `s.tags.join()` throws
+**Fix applied:** `routes/index.ts` now normalizes tags before both search and rendering. The page no longer assumes `space.tags` is always a clean `string[]`, so malformed or stringified tag payloads cannot crash the globe.
 
-**Two fixes needed:**
-
-### Fix 1 — Defensive render (quick fix so UI works)
-In `routes/index.ts`, wherever `s.tags.join(...)` is called, add a guard:
-```ts
-const displayTags = Array.isArray(s.tags) ? s.tags : [];
-// use displayTags.join(...) instead of s.tags.join(...)
-```
-This prevents the crash and lets the globe initialize even if one record is malformed.
-
-### Fix 2 — Root cause in DB layer (correct fix)
-Inspect what `lib/db.ts` actually returns for the `tags` column. If sqlite3 CLI returns it as a raw JSON string, `parseTags()` should be called on it. But `normalizeSpaceRecord` already calls `parseTags(row.tags)`. The issue might be:
-- `parseTags` returns `string[]` but something overrides it
-- The hub update/insert path doesn't call `normalizeSpaceRecord` before returning
-- Or the API response serialization doesn't run `parseTags`
-
-**Recommended debug step:** Add a `console.log` to `routes/api/hubs.ts` just before `return c.json({ space })` to inspect the actual shape of `space.tags`.
+**Notes:** `lib/db.ts` already normalizes SQLite `tags` values on read, but the route now defends itself as well. Keep the normalizer in place if you add more tag displays later.
 
 ---
 

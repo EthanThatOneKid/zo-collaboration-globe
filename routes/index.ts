@@ -274,12 +274,31 @@ function parseTagInput(value: string) {
     .slice(0, 6);
 }
 
+function normalizeTags(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map(String).map((tag) => tag.trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map(String).map((tag) => tag.trim()).filter(Boolean);
+      }
+    } catch {}
+
+    return parseTagInput(trimmed);
+  }
+
+  return [];
+}
+
 function normalizeIncomingSpace(space: Partial<SpaceRecord>): SpaceRecord {
-  const tags = Array.isArray(space.tags)
-    ? space.tags.map((tag) => String(tag).trim()).filter(Boolean)
-    : typeof space.tags === "string"
-      ? parseTagInput(space.tags.replaceAll("[", "").replaceAll("]", "").replaceAll('\"', ""))
-      : [];
   const featuredValue = space.featured;
   const privacyValue = space.privacy_offset_applied;
 
@@ -294,7 +313,7 @@ function normalizeIncomingSpace(space: Partial<SpaceRecord>): SpaceRecord {
     bio: String(space.bio ?? ""),
     avatar: String(space.avatar ?? "🌐"),
     url: String(space.url ?? ""),
-    tags,
+    tags: normalizeTags(space.tags),
     creator_handle: String(space.creator_handle ?? ""),
     featured:
       featuredValue === true ||
@@ -315,7 +334,7 @@ function matchesQuery(space: SpaceRecord, query: string) {
     space.creator_handle,
     space.location,
     space.bio,
-    space.tags.join(" "),
+    normalizeTags(space.tags).join(" "),
   ]
     .join(" ")
     .toLowerCase();
@@ -970,7 +989,7 @@ export default function GlobePage() {
                           {space.bio}
                         </p>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          {space.tags.map((tag) => (
+                          {normalizeTags(space.tags).map((tag) => (
                             <span
                               key={tag}
                               className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-400"
@@ -1119,7 +1138,7 @@ export default function GlobePage() {
                       {space.bio}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {space.tags.map((tag) => (
+                      {normalizeTags(space.tags).map((tag) => (
                         <span
                           key={tag}
                           className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-300"
